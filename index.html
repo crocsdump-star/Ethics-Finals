@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ethics Reviewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f2a5e; --navy2: #15327a; --gold: #f2c200; --gold-deep: #c9a000;
+    --cream: #f7f3ea; --paper: #fffdf8; --ink: #1c2530; --ink-soft: #5b6673;
+    --line: #dcd4c2; --good: #3f7a53; --good-bg:#e7f2ea; --bad: #b6432f; --bad-bg:#fbeae6;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--cream); color:var(--ink); font-family:'Inter',sans-serif; }
+  h1,h2,h3,.display { font-family:'Fraunces',serif; }
+  .topbar { background:var(--navy); border-bottom:4px solid var(--gold); }
+  .topbar-inner { max-width:980px; margin:0 auto; padding:22px 20px 20px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .brand { color:#f2f5fb; }
+  .brand .eyebrow { color:var(--gold); font-size:0.78rem; letter-spacing:0.02em; }
+  .brand h1 { margin:2px 0 0; font-size:clamp(1.5rem,4vw,2.1rem); font-weight:600; color:#fbfcff; }
+  .brand p { margin:4px 0 0; color:#b9c6d3; font-size:0.92rem; max-width:50ch; }
+  .score-pill { background:rgba(242,194,0,0.16); border:1px solid rgba(242,194,0,0.45); color:var(--gold); padding:8px 14px; border-radius:999px; font-size:0.85rem; white-space:nowrap; }
+  main { max-width:980px; margin:0 auto; padding:28px 20px 80px; }
+  .deck-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+  .deck-tab { border:1px solid var(--line); background:var(--paper); color:var(--ink-soft); padding:9px 16px; border-radius:8px; font-size:0.86rem; font-weight:500; cursor:pointer; font-family:'Inter',sans-serif; }
+  .deck-tab.active { background:var(--navy); border-color:var(--navy); color:#fbfcff; }
+  .mode-switch { display:inline-flex; background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:4px; margin-bottom:24px; }
+  .mode-btn { border:none; background:transparent; padding:8px 18px; border-radius:7px; font-family:'Inter',sans-serif; font-size:0.88rem; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .mode-btn.active { background:var(--gold); color:#2a2000; }
+  section.panel { display:none; }
+  section.panel.active { display:block; }
+  .card-stage { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .card-progress { font-size:0.85rem; color:var(--ink-soft); }
+  .flashcard { width:100%; max-width:640px; min-height:260px; perspective:1400px; cursor:pointer; }
+  .flashcard-inner { position:relative; width:100%; height:100%; min-height:260px; transition:transform .5s cubic-bezier(.2,.7,.3,1); transform-style:preserve-3d; }
+  .flashcard.flipped .flashcard-inner { transform:rotateY(180deg); }
+  .card-face { position:absolute; inset:0; backface-visibility:hidden; border-radius:14px; padding:32px 30px; display:flex; flex-direction:column; justify-content:center; box-shadow:0 10px 30px rgba(15,42,94,0.14); }
+  .card-front { background:var(--paper); border:1px solid var(--line); }
+  .card-front .tag { font-size:0.72rem; color:var(--gold-deep); font-weight:700; margin-bottom:12px; }
+  .card-front .q { font-family:'Fraunces',serif; font-size:1.3rem; line-height:1.35; font-weight:500; }
+  .card-front .hint { margin-top:18px; font-size:0.8rem; color:var(--ink-soft); }
+  .card-back { background:var(--navy); color:#f2f5fb; transform:rotateY(180deg); }
+  .card-back .a { font-size:1.02rem; line-height:1.55; }
+  .card-back .tag { font-size:0.72rem; color:var(--gold); font-weight:700; margin-bottom:12px; }
+  .card-controls { display:flex; gap:10px; align-items:center; }
+  .icon-btn { border:1px solid var(--line); background:var(--paper); color:var(--ink); width:44px; height:44px; border-radius:10px; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center; }
+  .icon-btn:hover { border-color:var(--gold-deep); }
+  .shuffle-btn { border:1px solid var(--line); background:transparent; color:var(--ink-soft); padding:9px 14px; border-radius:8px; font-size:0.82rem; cursor:pointer; font-family:'Inter',sans-serif; }
+  .quiz-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+  .quiz-head .qcount { font-size:0.85rem; color:var(--ink-soft); }
+  .progress-track { height:5px; background:var(--line); border-radius:999px; overflow:hidden; margin-bottom:22px; }
+  .progress-fill { height:100%; background:var(--gold); transition:width .3s ease; }
+  .quiz-card { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:28px; }
+  .quiz-card .tag { font-size:0.72rem; color:var(--gold-deep); font-weight:700; margin-bottom:10px; }
+  .quiz-prompt { font-family:'Fraunces',serif; font-size:1.25rem; font-weight:500; line-height:1.4; margin-bottom:20px; }
+  .options { display:flex; flex-direction:column; gap:10px; }
+  .option { text-align:left; padding:13px 16px; border-radius:9px; border:1px solid var(--line); background:var(--cream); color:var(--ink); font-family:'Inter',sans-serif; font-size:0.94rem; cursor:pointer; }
+  .option:hover:not(:disabled) { border-color:var(--gold-deep); }
+  .option.correct { background:var(--good-bg); border-color:var(--good); }
+  .option.incorrect { background:var(--bad-bg); border-color:var(--bad); }
+  .option:disabled { cursor:default; opacity:0.85; }
+  .feedback { margin-top:18px; padding:16px; border-radius:10px; display:none; }
+  .feedback.show { display:block; }
+  .feedback.correct-fb { background:rgba(63,122,83,0.1); border:1px solid rgba(63,122,83,0.3); }
+  .feedback.incorrect-fb { background:rgba(182,67,47,0.09); border:1px solid rgba(182,67,47,0.28); }
+  .feedback .verdict { font-weight:700; margin-bottom:4px; }
+  .feedback.correct-fb .verdict { color:var(--good); }
+  .feedback.incorrect-fb .verdict { color:var(--bad); }
+  .feedback .expl { font-size:0.92rem; color:var(--ink-soft); line-height:1.5; }
+  .next-row { display:flex; justify-content:flex-end; margin-top:20px; }
+  .next-btn { background:var(--navy); color:#fbfcff; border:none; padding:11px 22px; border-radius:9px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.9rem; cursor:pointer; }
+  .next-btn:disabled { opacity:0.4; cursor:default; }
+  .results { text-align:center; padding:40px 20px; }
+  .results .big { font-family:'Fraunces',serif; font-size:3rem; color:var(--navy); }
+  .results p.sub { color:var(--ink-soft); margin-top:6px; }
+  .exam-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+  .action-btn { border:none; padding:12px 20px; border-radius:9px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.86rem; }
+  .action-btn.retake { background:var(--gold); color:#2a2000; }
+  .action-btn.shuffle { background:var(--paper); color:var(--navy); border:1px solid var(--line); }
+  .action-btn.newexam { background:var(--navy); color:#fbfcff; }
+  .bottom-controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:28px; }
+  footer.note { text-align:center; color:var(--ink-soft); font-size:0.8rem; margin-top:40px; }
+  @media (max-width:560px) { .quiz-card,.card-face { padding:22px 18px; } .quiz-prompt,.card-front .q { font-size:1.08rem; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="eyebrow">NTC &middot; ETHICS (WEEK 5-6-7)</div>
+      <h1>Ethics Reviewer</h1>
+      <p>Flashcards and an auto-checked quiz covering Organizational Ethics &amp; Culture, Marketing &amp; Consumer Relations, and HR &amp; Workplace Ethics.</p>
+    </div>
+    <div class="score-pill" id="scorePill">0 reviewed</div>
+  </div>
+</div>
+
+<main>
+  <div class="deck-tabs" id="deckTabs"></div>
+  <div class="mode-switch">
+    <button class="mode-btn active" id="modeFlash">Flashcards</button>
+    <button class="mode-btn" id="modeQuiz">Quiz</button>
+  </div>
+
+  <section class="panel active" id="panelFlash">
+    <div class="card-stage">
+      <div class="card-progress" id="flashProgress">Card 1 of 1</div>
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner">
+          <div class="card-face card-front">
+            <div class="tag" id="frontTag">TOPIC</div>
+            <div class="q" id="frontText">Question</div>
+            <div class="hint">Tap the card to reveal the answer</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="tag">ANSWER</div>
+            <div class="a" id="backText">Answer</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-controls">
+        <button class="icon-btn" id="prevCard" aria-label="Previous card">&#8592;</button>
+        <button class="shuffle-btn" id="shuffleCards">Shuffle deck</button>
+        <button class="icon-btn" id="nextCard" aria-label="Next card">&#8594;</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panelQuiz">
+    <div id="quizArea"></div>
+    <div class="bottom-controls">
+      <button class="action-btn retake" onclick="retakeQuizExam()">Retake Exam</button>
+      <button class="action-btn shuffle" onclick="shuffleQuizExam()">Shuffle Exam</button>
+      <button class="action-btn newexam" onclick="generateNewQuizExam()">Generate New Exam</button>
+    </div>
+  </section>
+
+  <footer class="note">Built from your uploaded Ethics (Week 5-6-7) lecture deck &middot; answers are paraphrased for review purposes</footer>
+</main>
+
+<script>
+const decks = {
+ s1: {
+  label: "I. Codes of Ethics & Org Culture",
+  flashcards: [
+   {tag:"Culture", q:"What are the five tangible (material) aspects of culture named in the deck?", a:"Architecture, Art & Music, Food & Cuisine, Tools & Technology, and Clothing."},
+   {tag:"Culture", q:"What are the five non-material (intangible) aspects of culture?", a:"Language, Values & Beliefs, Customs & Traditions, Social Norms, and Rituals & Ceremonies."},
+   {tag:"Why Ethics Matters", q:"Name the three reasons the deck gives for why ethics matters to an organization.", a:"Risk Mitigation (prevents legal/reputational/financial harm), Reputation & Trust (builds a 'social license to operate'), and Performance (higher retention, productivity, profitability)."},
+   {tag:"Why Ethics Matters", q:"What specific term does the deck use for the long-term trust ethical companies build with consumers, investors, and employees?", a:"Social License to Operate."},
+   {tag:"Why Ethics Matters", q:"What business outcomes does the deck say ethical companies often see?", a:"Higher employee retention, productivity, and profitability."},
+   {tag:"Definitions", q:"How does the deck distinguish Organizational Ethics from Culture?", a:"Organizational Ethics refers to the moral principles that guide the organization's behavior, while Culture is how those principles are lived out daily."},
+   {tag:"Codes of Ethics", q:"How should a code of ethics be developed, according to the deck?", a:"As a top-down, inclusive process, starting with core values such as Integrity, Respect, and Responsibility."},
+   {tag:"Codes of Ethics", q:"What are the three keys to implementing a code of ethics?", a:"Accessibility (easy to find, read, understand), Training (integrated into onboarding and annual training), and Enforcement (clearly stated consequences for violations)."},
+   {tag:"Ethical Culture", q:"What does 'Tone at the Top' mean in the Ethical Culture Ecosystem?", a:"Ethical leadership — leaders must model ethical behavior consistently."},
+   {tag:"Ethical Culture", q:"What is a 'Speak-Up Culture'?", a:"Open communication where employees feel safe raising ethical concerns."},
+   {tag:"Ethical Culture", q:"What does 'Shared Values' mean in the Ethical Culture Ecosystem?", a:"A widespread, explicit understanding of what the organization stands for."},
+   {tag:"Ethical Culture", q:"What does 'Fair Treatment' mean in the Ethical Culture Ecosystem?", a:"Consistency in rewards and disciplinary actions."},
+   {tag:"Training", q:"What kind of training does the deck recommend, beyond compliance-only training?", a:"Scenario-based training ('What would you do?') to build ethical muscle memory, focused especially on middle management — described as the ethical 'linchpin'."},
+   {tag:"Communication", q:"How should ethical messaging be kept alive within an organization?", a:"Through regular reinforcement via internal newsletters, intranet, and town halls."},
+   {tag:"Accountability", q:"What three mechanisms ensure accountability for ethics violations?", a:"Clear reporting channels (anonymous hotlines, ombudsman, manager escalation), performance management (measuring 'how' results were achieved, not just 'what'), and consistent discipline with no double standards."},
+   {tag:"Accountability", q:"How should ethical conduct be integrated into performance management?", a:"By measuring 'how' results were achieved, not just 'what' results were achieved."},
+   {tag:"Measuring Ethics", q:"What three methods does the deck suggest for measuring ethical climate and culture?", a:"Employee surveys (on ethical pressure, willingness to report, leadership integrity), reporting data (volume, nature, time to resolution), and exit interviews."},
+   {tag:"Ethics as a System", q:"Where should ethics be integrated, rather than treated as a separate silo?", a:"Into risk management, supplier contracts (due diligence), IT security policies, and new product development processes."}
+  ],
+  quizPool: [
+   {q:"Which is a tangible (material) aspect of culture?", options:["Values & Beliefs","Architecture","Social Norms","Rituals & Ceremonies"], correct:1, expl:"Architecture, art & music, food & cuisine, tools & technology, and clothing are tangible/material culture; the rest are non-material."},
+   {q:"According to the deck, Organizational Ethics is the moral principles guiding behavior, while Culture is:", options:["A legal requirement","How those principles are lived out daily","A marketing strategy","A financial report"], correct:1, expl:"Culture is defined as how an organization's ethical principles are lived out day to day."},
+   {q:"Which of these is NOT listed as a reason 'Why Ethics Matters'?", options:["Risk Mitigation","Reputation & Trust","Performance","Tax Avoidance"], correct:3, expl:"The three reasons given are Risk Mitigation, Reputation & Trust, and Performance — not tax avoidance."},
+   {q:"A code of ethics should be developed as a:", options:["Bottom-up, secretive process","Top-down, inclusive process starting with core values","One-time announcement with no follow-up","Task outsourced entirely to legal"], correct:1, expl:"The deck specifies codes of ethics must be developed top-down and inclusively, starting from core values like integrity, respect, and responsibility."},
+   {q:"Which is NOT one of the three implementation pillars of a code of ethics?", options:["Accessibility","Training","Enforcement","Advertising"], correct:3, expl:"Implementation rests on Accessibility, Training, and Enforcement — advertising isn't part of this framework."},
+   {q:"'Tone at the Top' in the Ethical Culture Ecosystem refers to:", options:["Office background music policy","Leaders modeling ethical behavior consistently","Customer service call scripts","The company dress code"], correct:1, expl:"Tone at the Top means ethical leadership — leaders consistently modeling the behavior they expect from others."},
+   {q:"A 'Speak-Up Culture' means:", options:["Mandatory public speaking training","Employees feel safe raising concerns","Loud, high-energy offices","Weekly all-hands meetings"], correct:1, expl:"It refers to open communication where employees feel safe raising ethical concerns without fear."},
+   {q:"Who does the deck identify as the ethical 'linchpin' that training should especially focus on?", options:["Senior executives only","Middle management","New hires only","External consultants"], correct:1, expl:"Middle management is highlighted as the ethical linchpin connecting leadership intent to day-to-day practice."},
+   {q:"Which of these is NOT a recommended accountability mechanism?", options:["Anonymous hotlines","Ombudsman","Ignoring minor violations","Clear manager escalation paths"], correct:2, expl:"Accountability requires consistent discipline with no double standards — ignoring violations undermines that."},
+   {q:"Measuring ethical climate can include all of these EXCEPT:", options:["Employee surveys","Reporting data tracking","Exit interviews","Quarterly sales targets"], correct:3, expl:"Sales targets are a performance metric, not one of the ethics-climate measurement methods listed (surveys, reporting data, exit interviews)."},
+   {q:"Building long-term trust with consumers, investors, and employees is called:", options:["Social License to Operate","Puffery","DEI","Whistleblowing"], correct:0, expl:"The deck names this long-term trust 'Social License to Operate,' part of the Reputation & Trust rationale for ethics."},
+   {q:"Which is part of 'Fair Treatment' within the Ethical Culture Ecosystem?", options:["Consistency in rewards and discipline","Anonymous surveys only","Marketing campaigns","Price elasticity"], correct:0, expl:"Fair Treatment means consistency in rewards and disciplinary actions across the organization."},
+   {q:"Embedding ethics into supplier contracts, IT security, and product development reflects:", options:["Ethics as a separate department","Ethics as a system, not a silo","Elastic demand","Puffery"], correct:1, expl:"The deck stresses ethics should be an integrated system across functions, not a standalone silo."},
+   {q:"Ethical companies, per the deck, often see higher:", options:["Employee retention, productivity, and profitability","Advertising costs only","Regulatory penalties","Customer complaints"], correct:0, expl:"The Performance rationale notes ethical companies often see higher retention, productivity, and profitability."}
+  ]
+ },
+ s2: {
+  label: "II. Marketing & Consumer Relations",
+  flashcards: [
+   {tag:"Marketing Ethics", q:"What is the core principle of ethical marketing, and what should be avoided?", a:"Marketing must be clear, accurate, and non-deceptive — avoiding 'puffery' that misleads consumers about a product's function or benefit."},
+   {tag:"Marketing Ethics", q:"What term describes making unsubstantiated sustainability or health claims?", a:"Greenwashing (or healthwashing) — claims that cannot actually be substantiated."},
+   {tag:"Data Ethics", q:"What is the key issue around 'Informed Consent' in data ethics?", a:"Whether consumers are truly aware of what data is being collected about them and how it will be used."},
+   {tag:"Data Ethics", q:"What does 'Data is Trust' require of organizations regarding PII?", a:"Secure storage and processing of Personally Identifiable Information, in compliance with regulations like GDPR and CCPA."},
+   {tag:"Fair Play", q:"What two pricing issues does ethical marketing need to avoid?", a:"Price gouging during crises or for essential services, and hidden/unclear fees or charges."},
+   {tag:"Fair Play", q:"What anti-competitive practice must be prohibited for fair market competition?", a:"Collusion, such as price-fixing, and other anti-competitive practices."},
+   {tag:"Safety", q:"What is 'Duty of Care' in the context of product/service safety?", a:"The organization's moral and legal duty to ensure its products or services are safe for their intended use."},
+   {tag:"Safety", q:"What three ethical actions support product safety?", a:"Proactive testing, clear warnings, and rapid, transparent recalls when issues are discovered."},
+   {tag:"Vulnerable Groups", q:"Which populations does the deck flag as needing protection from exploitative marketing?", a:"Children, the elderly, and those with financial insecurity — groups that may lack capacity for informed decision-making."},
+   {tag:"Vulnerable Groups", q:"What strategy should be used for marketing campaigns aimed at specific vulnerable demographic groups?", a:"Strict ethical review before the campaign goes out."},
+   {tag:"Digital Accountability", q:"What are 'dark patterns'?", a:"Deceptive website design elements used to trick users into giving consent they wouldn't otherwise give."},
+   {tag:"Digital Accountability", q:"Besides dark patterns, what two other digital ethics issues does the deck mention?", a:"Misinformation/disinformation, and ensuring the authenticity of online reviews and endorsements."}
+  ],
+  quizPool: [
+   {q:"'Puffery' in marketing refers to:", options:["Accurate, verifiable product descriptions","Misleading claims about a product's function or benefit","A specific pricing strategy","A type of eco-friendly packaging"], correct:1, expl:"Puffery is marketing language that misleads consumers about what a product actually does or delivers."},
+   {q:"Making unsubstantiated sustainability claims about a product is known as:", options:["Greenwashing","Blue-sky thinking","Data mining","Price gouging"], correct:0, expl:"Greenwashing (or healthwashing for health claims) refers to unsubstantiated sustainability/health marketing claims."},
+   {q:"GDPR and CCPA are examples of:", options:["Marketing slogans","Data privacy regulations","Hiring frameworks","Supply chain audit standards"], correct:1, expl:"Both are data privacy regulations organizations must comply with when handling personally identifiable information."},
+   {q:"Price gouging during a crisis is an ethical violation under which category?", options:["Fair Play in the Market","Digital Accountability","DEI","Whistleblowing"], correct:0, expl:"Fair Play in the Market covers ethical pricing, including avoiding price gouging and ensuring clarity on hidden fees."},
+   {q:"The organization's 'duty of care' refers to ensuring:", options:["Maximum profit margins","Products/services are safe for their intended use","Fast shipping times","Minimal employee benefits"], correct:1, expl:"Duty of care is the moral and legal obligation to ensure safety for intended use, backed by testing, warnings, and recalls."},
+   {q:"Marketing campaigns aimed at children or the elderly require:", options:["No special consideration","Strict ethical review","Increased advertising spend only","Lower pricing only"], correct:1, expl:"Because these groups may lack capacity for fully informed decisions, campaigns targeting them need strict ethical review."},
+   {q:"'Dark patterns' on websites refer to:", options:["Low-light visual themes","Deceptive design tricking users into consent","Secure payment icons","Mobile-only page layouts"], correct:1, expl:"Dark patterns are deceptive UX/UI design choices meant to manipulate users into actions like giving consent."},
+   {q:"Avoiding exploitation of populations lacking capacity for informed decisions falls under:", options:["Protection of the Vulnerable","Fair Play in the Market","Digital Accountability","DEI"], correct:0, expl:"This is the 'Protection of the Vulnerable' principle — covering children, the elderly, and the financially insecure."},
+   {q:"Ensuring the authenticity of online reviews and endorsements is part of:", options:["Digital Accountability","Safety First","Fair Hiring","Whistleblowing"], correct:0, expl:"Digital Accountability covers misinformation, dark patterns, and the authenticity of reviews/endorsements."},
+   {q:"Secure storage and processing of Personally Identifiable Information relates to:", options:["Data is Trust","Fair Play","Safety First","DEI"], correct:0, expl:"'Data is Trust' covers informed consent and the secure handling of PII in compliance with laws like GDPR and CCPA."}
+  ]
+ },
+ s3: {
+  label: "III. HR & Workplace Ethics",
+  flashcards: [
+   {tag:"Fair Hiring", q:"What should hiring and promotion decisions be based on?", a:"Merit-based decisions — eliminating bias in job descriptions, sourcing, interviewing, and promotion processes."},
+   {tag:"Fair Hiring", q:"What is the ethical goal for all applicants in the hiring process?", a:"Ensuring all applicants have an equal opportunity, regardless of background."},
+   {tag:"Discrimination", q:"How is workplace discrimination defined?", a:"Unfair treatment based on protected characteristics such as race, gender, or religion."},
+   {tag:"Harassment", q:"How is workplace harassment defined, and what does addressing it require?", a:"Unwelcome conduct that creates a hostile, offensive, or intimidating work environment — requiring clear policies and prompt, confidential investigation."},
+   {tag:"Employee Rights", q:"Name the employee rights listed in the deck.", a:"Freedom of association, the right to a safe workplace, and fair wages."},
+   {tag:"Employee Privacy", q:"What ethical limit applies to monitoring employees, and what principle is key?", a:"There are ethical limits on monitoring communications, location, or social media activity — transparency is key, so employees must know what is tracked and why."},
+   {tag:"DEI", q:"What does 'Diversity' mean in the DEI framework?", a:"Representation of different backgrounds within the organization."},
+   {tag:"DEI", q:"What does 'Equity' mean in the DEI framework?", a:"Fairness in access, opportunity, and advancement."},
+   {tag:"DEI", q:"What does 'Inclusion' mean in the DEI framework?", a:"Creating an environment where diverse individuals feel valued and respected."},
+   {tag:"Wellbeing", q:"What is the 'Ethics of Overwork', per the deck?", a:"Organizations have an ethical duty to prevent burnout and promote reasonable working hours."},
+   {tag:"Wellbeing", q:"What kind of support should organizations provide for employee wellbeing?", a:"Resources for mental and physical health, such as Employee Assistance Programs (EAPs) and flexible work options."},
+   {tag:"Whistleblowing", q:"How is whistleblowing defined?", a:"The act of an employee reporting alleged misconduct to management or an external authority."},
+   {tag:"Whistleblowing", q:"What protection must organizations guarantee for whistleblowers who report in good faith?", a:"Absolute non-retaliation — critical for maintaining an open, ethical culture."}
+  ],
+  quizPool: [
+   {q:"Fair hiring practices should be based primarily on:", options:["Personal connections","Merit-based decisions free of bias","Seniority only","Lowest salary expectations"], correct:1, expl:"Fair hiring focuses on merit-based decisions, eliminating bias across job descriptions, sourcing, interviewing, and promotion."},
+   {q:"Workplace discrimination is best defined as:", options:["Any disagreement at work","Unfair treatment based on protected characteristics","Performance-based feedback","Normal workplace competition"], correct:1, expl:"Discrimination specifically means unfair treatment tied to protected characteristics like race, gender, or religion."},
+   {q:"Employee privacy policy should prioritize:", options:["Hidden, unlimited monitoring","Transparency about what's tracked and why","Outsourcing all monitoring decisions","No monitoring policy at all"], correct:1, expl:"The deck stresses transparency as key — employees must know what is being tracked and why."},
+   {q:"In the DEI framework, 'Equity' refers to:", options:["Representation of different backgrounds","Fairness in access, opportunity, and advancement","Creating a sense of belonging","Company diversity statistics"], correct:1, expl:"Equity is specifically about fairness in access, opportunity, and advancement — distinct from diversity (representation) and inclusion (belonging)."},
+   {q:"The ethical duty to prevent burnout and promote reasonable hours falls under:", options:["Fair hiring practices","Work-life balance and employee wellbeing","Digital accountability","Code of ethics enforcement"], correct:1, expl:"This is explicitly framed as the 'Ethics of Overwork' under work-life balance and employee wellbeing."},
+   {q:"Whistleblowing is best defined as:", options:["Reporting alleged misconduct to management or an external authority","Leaving a company without notice","Filing a complaint about pay rates","Publicly criticizing competitors"], correct:0, expl:"Whistleblowing is the act of reporting alleged misconduct to management or an external authority."},
+   {q:"Protection for good-faith whistleblowers requires:", options:["Partial tolerance of retaliation","Absolute non-retaliation","Mandatory public naming of the reporter","Automatic termination review for the reporter"], correct:1, expl:"The deck is explicit: organizations must ensure absolute non-retaliation against those who report in good faith."},
+   {q:"Freedom of association, a safe workplace, and fair wages are examples of:", options:["Employee Rights","DEI Initiatives","Whistleblower Protections","Fair Hiring Metrics"], correct:0, expl:"These are the specific Employee Rights named in the deck."},
+   {q:"Representation of different backgrounds in an organization refers to which DEI pillar?", options:["Diversity","Equity","Inclusion","Accountability"], correct:0, expl:"Diversity specifically means representation of different backgrounds — distinct from equity and inclusion."},
+   {q:"Providing EAPs and flexible work options supports:", options:["Employee wellbeing","Fair hiring","Whistleblower protection","Digital accountability"], correct:0, expl:"Employee Assistance Programs and flexible work options are listed as wellbeing support for mental and physical health."}
+  ]
+ }
+};
+
+let currentDeck = "s1";
+let flashOrder = [];
+let flashIndex = 0;
+let reviewedSet = new Set();
+let quizSelected = [];
+let quizIndex = 0;
+let quizScore = 0;
+
+function initTabs(){
+  const wrap = document.getElementById('deckTabs');
+  wrap.innerHTML = '';
+  Object.keys(decks).forEach(key=>{
+    const btn = document.createElement('button');
+    btn.className = 'deck-tab' + (key===currentDeck ? ' active' : '');
+    btn.textContent = decks[key].label;
+    btn.onclick = () => { currentDeck = key; refreshTabs(); resetFlash(); generateNewQuizExam(); };
+    wrap.appendChild(btn);
+  });
+}
+function refreshTabs(){
+  document.querySelectorAll('.deck-tab').forEach((b,i)=>{ b.classList.toggle('active', Object.keys(decks)[i]===currentDeck); });
+}
+function shuffleArr(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sampleN(arr,n){ return shuffleArr(arr).slice(0, Math.min(n, arr.length)); }
+
+function resetFlash(){
+  const cards = decks[currentDeck].flashcards;
+  flashOrder = cards.map((_,i)=>i);
+  flashIndex = 0;
+  renderFlash();
+}
+function renderFlash(){
+  const cards = decks[currentDeck].flashcards;
+  const idx = flashOrder[flashIndex];
+  const c = cards[idx];
+  document.getElementById('frontTag').textContent = c.tag.toUpperCase();
+  document.getElementById('frontText').textContent = c.q;
+  document.getElementById('backText').textContent = c.a;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('flashProgress').textContent = `Card ${flashIndex+1} of ${cards.length}`;
+  reviewedSet.add(currentDeck+'-'+idx);
+  updateScorePill();
+}
+function updateScorePill(){ document.getElementById('scorePill').textContent = `${reviewedSet.size} card${reviewedSet.size===1?'':'s'} reviewed`; }
+
+document.getElementById('flashcard').addEventListener('click', ()=>{ document.getElementById('flashcard').classList.toggle('flipped'); });
+document.getElementById('nextCard').addEventListener('click', e=>{ e.stopPropagation(); flashIndex=(flashIndex+1)%flashOrder.length; renderFlash(); });
+document.getElementById('prevCard').addEventListener('click', e=>{ e.stopPropagation(); flashIndex=(flashIndex-1+flashOrder.length)%flashOrder.length; renderFlash(); });
+document.getElementById('shuffleCards').addEventListener('click', e=>{ e.stopPropagation(); flashOrder=shuffleArr(flashOrder); flashIndex=0; renderFlash(); });
+
+/* ----- Quiz / Exam ----- */
+function buildQuizItem(item){
+  const opts = shuffleArr(item.options);
+  return { q:item.q, options:opts, correctText:item.options[item.correct], expl:item.expl };
+}
+function generateNewQuizExam(){
+  const pool = decks[currentDeck].quizPool;
+  const size = Math.min(10, pool.length);
+  quizSelected = sampleN(pool, size).map(buildQuizItem);
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuiz();
+}
+function shuffleQuizExam(){
+  quizSelected = shuffleArr(quizSelected).map(item=>({ ...item, options: shuffleArr(item.options) }));
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuiz();
+}
+function retakeQuizExam(){
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuiz();
+}
+
+function renderQuiz(){
+  const area = document.getElementById('quizArea');
+  if(quizIndex >= quizSelected.length){
+    const pct = Math.round((quizScore/quizSelected.length)*100);
+    area.innerHTML = `<div class="results"><div class="big">${quizScore}/${quizSelected.length}</div>
+      <p class="sub">${pct}% correct on ${decks[currentDeck].label}</p>
+      <div class="exam-btns">
+        <button class="action-btn retake" onclick="retakeQuizExam()">Retake Exam</button>
+        <button class="action-btn shuffle" onclick="shuffleQuizExam()">Shuffle Exam</button>
+        <button class="action-btn newexam" onclick="generateNewQuizExam()">Generate New Exam</button>
+      </div></div>`;
+    return;
+  }
+  const item = quizSelected[quizIndex];
+  const pctProg = (quizIndex/quizSelected.length)*100;
+  area.innerHTML = `
+    <div class="quiz-head">
+      <span class="tag" style="color:var(--gold-deep);font-weight:700;font-size:0.75rem;">${decks[currentDeck].label.toUpperCase()}</span>
+      <span class="qcount">Question ${quizIndex+1} of ${quizSelected.length} &middot; Score ${quizScore}</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pctProg}%"></div></div>
+    <div class="quiz-card">
+      <div class="quiz-prompt">${item.q}</div>
+      <div class="options" id="optionsWrap"></div>
+      <div class="feedback" id="feedbackBox"><div class="verdict" id="verdictText"></div><div class="expl" id="explText"></div></div>
+      <div class="next-row"><button class="next-btn" id="nextQBtn" disabled>Next question</button></div>
+    </div>`;
+  const optWrap = document.getElementById('optionsWrap');
+  item.options.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className = 'option';
+    b.textContent = opt;
+    b.onclick = () => selectAnswer(i,item);
+    optWrap.appendChild(b);
+  });
+  document.getElementById('nextQBtn').onclick = ()=>{ quizIndex++; renderQuiz(); };
+}
+function selectAnswer(i,item){
+  const allBtns = document.querySelectorAll('#optionsWrap .option');
+  if(allBtns[0].disabled) return;
+  const chosenText = item.options[i];
+  const isCorrect = chosenText === item.correctText;
+  allBtns.forEach((b,idx)=>{
+    b.disabled = true;
+    if(item.options[idx] === item.correctText) b.classList.add('correct');
+    else if(idx===i) b.classList.add('incorrect');
+  });
+  const fb = document.getElementById('feedbackBox');
+  const verdict = document.getElementById('verdictText');
+  const expl = document.getElementById('explText');
+  if(isCorrect){ quizScore++; fb.classList.add('show','correct-fb'); verdict.textContent='Correct.'; }
+  else { fb.classList.add('show','incorrect-fb'); verdict.textContent='Not quite.'; }
+  expl.textContent = item.expl;
+  document.getElementById('nextQBtn').disabled = false;
+}
+
+document.getElementById('modeFlash').addEventListener('click', ()=>{
+  document.getElementById('modeFlash').classList.add('active');
+  document.getElementById('modeQuiz').classList.remove('active');
+  document.getElementById('panelFlash').classList.add('active');
+  document.getElementById('panelQuiz').classList.remove('active');
+});
+document.getElementById('modeQuiz').addEventListener('click', ()=>{
+  document.getElementById('modeQuiz').classList.add('active');
+  document.getElementById('modeFlash').classList.remove('active');
+  document.getElementById('panelQuiz').classList.add('active');
+  document.getElementById('panelFlash').classList.remove('active');
+});
+
+initTabs();
+resetFlash();
+generateNewQuizExam();
+</script>
+</body>
+</html>
